@@ -72,14 +72,15 @@ namespace BackupLibrary
         {
             if (EnabledAutoBackup)
             {
-                FileInfo file = new FileInfo(System.IO.Path.Combine(e.FullPath, e.Name));
-                if (file.Exists)
+                var fullName = System.IO.Path.Combine(e.FullPath, e.Name);                               
+                FileInfo fileInfo = new FileInfo(fullName);                
+                if (fileInfo.Exists)
                 {
-                    if (file.Attributes.HasFlag(FileAttributes.Hidden))
+                    if (fileInfo.Attributes.HasFlag(FileAttributes.Hidden))
                         return;
-                    else if (file.Attributes.HasFlag(FileAttributes.Directory) && Support.DirToExclude(e.Name))
+                    else if (Directory.Exists(fullName) && Support.DirToExclude(e.Name))
                         return;
-                    else if (!file.Attributes.HasFlag(FileAttributes.Directory) && !file.Attributes.HasFlag(FileAttributes.Device) && Support.FileToExclude(e.Name))
+                    else if (File.Exists(fullName) && !fileInfo.Attributes.HasFlag(FileAttributes.Device) && Support.FileToExclude(e.Name))
                         return;
                 }
                 OnChange?.Invoke();
