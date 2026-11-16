@@ -14,6 +14,7 @@ on:
     tags: ['v*']
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
@@ -32,13 +33,18 @@ jobs:
           VER="${VER#v}"
           dotnet pack Backup/BackupLibrary.csproj -c Release -o ./out \
             -p:Version="$VER" -p:SkipNuGetPush=true
+      - name: NuGet login (trusted publishing, no stored key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: kocahoctpa
       - name: Push BackupLibrary
         shell: bash
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           if [ -z "$NUGET_API_KEY" ]; then
-            echo "::error::NUGET_API_KEY secret is not set on this repository — the package was NOT published."
+            echo "::error::NuGet login failed (trusted publishing policy mismatch, or id-token: write missing) — the package was NOT published."
             exit 1
           fi
           dotnet nuget push ./out/BackupLibrary.*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
@@ -53,10 +59,10 @@ jobs:
       - name: Push DataRedundancy
         shell: bash
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           if [ -z "$NUGET_API_KEY" ]; then
-            echo "::error::NUGET_API_KEY secret is not set on this repository — the package was NOT published."
+            echo "::error::NuGet login failed (trusted publishing policy mismatch, or id-token: write missing) — the package was NOT published."
             exit 1
           fi
           dotnet nuget push ./out/DataRedundancy.*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
@@ -71,10 +77,10 @@ jobs:
       - name: Push AntiGitLibrary
         shell: bash
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           if [ -z "$NUGET_API_KEY" ]; then
-            echo "::error::NUGET_API_KEY secret is not set on this repository — the package was NOT published."
+            echo "::error::NuGet login failed (trusted publishing policy mismatch, or id-token: write missing) — the package was NOT published."
             exit 1
           fi
           dotnet nuget push ./out/AntiGitLibrary.*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
